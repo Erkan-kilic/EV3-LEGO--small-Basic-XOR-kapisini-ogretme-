@@ -1,0 +1,256 @@
+toplamhata=0
+n=0.5
+sayac=0
+e=2.718281828459045235360287471
+
+'Bians ve Ağılıklar için Random sayı atamam  -0.5 ile 0,5 arası
+w13=(Math.GetRandomNumber(7)-3)/10
+w14=(Math.GetRandomNumber(7)-3)/10
+w23=(Math.GetRandomNumber(7)-3)/10
+w35=(Math.GetRandomNumber(7)-3)/10
+w45=(Math.GetRandomNumber(7)-3)/10
+
+b1=(Math.GetRandomNumber(7)-3)/10
+b2=(Math.GetRandomNumber(7)-3)/10
+b3=(Math.GetRandomNumber(7)-3)/10
+b4=(Math.GetRandomNumber(7)-3)/10
+b5=(Math.GetRandomNumber(7)-3)/10
+
+
+
+' XOR  10000 De fa eğitimi 
+ogrenme1:
+
+
+a=Math.Remainder(sayac,4) ''  Sayacımın değerinin modunu alarak 4 farklı çıkış için  if else ile eğtime sokuyor.
+
+If a=0 Then
+  Q1=0
+  Q2=0
+  y1=0
+ElseIf a=1  Then
+  Q1=0
+  Q2=1
+  y1=1
+ElseIf a=2 then
+  Q1=1
+  Q2=0
+  y1=1
+Else
+  Q1=1
+  Q2=1
+  y1=0
+EndIf
+
+' Gizli  ve  çıkış katmanlarının nöronlarını hesaplanması 
+
+net3=(Q1*w13)+(Q2*w23)+b3
+Q3=1/(Math.Power(e,-net3)+1)
+
+
+net4=(Q1*w14)+(Q2*w24)+b4
+Q4=1/(Math.Power(e,-net4)+1)
+
+
+net5=(Q3*w35)+(Q4*w45)+b5
+Q5=1/(Math.Power(e,-net5)+1)
+
+'Çıkış nöronlarına ait hata hesaplanması 
+
+s5=(y1-Q5)*Q5*(1-Q5)
+
+'Çıkış  katman ile Gizli  arsaında ki nöronları güncelliyoruz 
+
+w35=w35+(n*s5*Q3)
+w45=w45+(n*s5*Q4)
+
+b5=b5+(n*s5)
+
+
+' Gizli katmanda ki  nöronlarına ait hata hesaplanması 
+
+s3=Q3*(1-Q3)*(w35*s5)
+s4=Q4*(1-Q4)*(w45*s5)
+
+b3=b3+(n*s3)
+b4=b4+(n*s4)
+
+
+' Gizli katman ile Giriş katmanı arasında ki ağırlıkarın hesaplanması 
+
+w13=w13+(s3*n*Q1)
+w23=w23+(s3*n*Q2)
+
+w14=w14+(s4*n*Q1)
+w24=w24+(s4*n*Q2)
+
+
+
+sayac=sayac+1 
+If sayac<10000 Then ''''''EĞİTİMİN BİTİMİ 
+Goto ogrenme1
+EndIf
+
+
+'' Burada ise eğitilmiş değerlerimi yedekliyorum. Çünkü program çalıştığı zaman  örnek olarak   Q1=0  ve  Q2=0   için  y1=0    olarak uzun zaman çalıştığında o çıkışa 
+'eğitiliyor  . Ardında 1 ve 0 girişini verdiğimizde geç tepki vermesinden dolayı yaptım .Sürekli olarak eğitilmiş degerler daha da eğitilmesi için 
+'kod  incelendiğide daha net anlaşılacaktır.
+  e_net3=net3
+  e_Q3=Q3
+  e_net4=net4
+  e_Q4=Q4
+  e_net5=net5
+  e_Q5=Q5
+  
+  e_w35=w35
+  e_w45=w45
+  e_b5=b5
+  e_s3=s3
+  e_s4=s4
+  e_b3=b3
+  e_b4=b4
+  e_w13=w13
+  e_w23=w23
+  e_w14=w14
+  e_w24=w24
+  
+  
+  While "true"  '' sürekli motorun komut beklemesi için  while döngüsüne soktum 
+ 
+'Touch sensör lerin 3 ve 4 . porta bağlıdır ve oradan 100 ile 0 değer okuyor .
+TextWindow.WriteLine("")
+x1=Sensor.ReadPercent(3)
+TextWindow.WriteLine("sensör x1= "+x1)
+x2=Sensor.ReadPercent(4)
+TextWindow.WriteLine("sensör x2= "+x2)
+TextWindow.WriteLine("")
+
+
+' Tonch sensörüne basıldığında 100 değerini basılmadığında 0 değerini okuduğu için 100 değerini 1 e dönüştürüyorum 
+
+
+If x1=100 Then
+  x1=1
+EndIf
+
+If x2=100 Then
+  x2=1
+EndIf
+
+' okuduğum değerleri  giriş katmanı nörnlarına atıyorum 
+Q1=x1
+Q2=x2
+
+
+'' Burda sonuc  giriş degerlerime göre sonuc her  o olduğunda  bu kodu çalıştırarak 
+'yapay sinir ağının daha da kendini geliştimesini ve  farklı çıkışlar için hızlı tepki vermesini sağlamak için yaptım   
+
+If Q1=Q2 Then
+  y1=0
+  
+ 
+' Gizli  ve  çıkış katmanlarının nöronlarını hesaplanması 
+
+net3=(Q1*w13)+(Q2*w23)+b3
+Q3=1/(Math.Power(e,-net3)+1)
+
+
+net4=(Q1*w14)+(Q2*w24)+b4
+Q4=1/(Math.Power(e,-net4)+1)
+
+
+net5=(Q3*w35)+(Q4*w45)+b5
+Q5=1/(Math.Power(e,-net5)+1)
+
+toplamhata=y1-Q5
+
+If Q5<0.5 then 
+  Q5=0
+Else
+   Q5=1
+EndIf
+
+
+
+
+
+If Q5=1 Then 
+ Motor.Start("AD",20)
+Else
+  Motor.Stop("AD","Brake")
+EndIf
+
+TextWindow.ForegroundColor="red"
+TextWindow.WriteLine("x1="+x1+ "  x2="+x2  + "  y1="+y1)
+TextWindow.WriteLine("")
+TextWindow.WriteLine("Q1= "+Q1)
+TextWindow.WriteLine("Q2= "+Q2)
+TextWindow.WriteLine("")
+TextWindow.WriteLine("Eygitim sayımız= "+sayac)
+TextWindow.WriteLine("Sonucmuz  "+a)
+TextWindow.WriteLine("Toplam hata değerimiz= "+toplamhata)
+TextWindow.WriteLine("")
+TextWindow.WriteLine("Egitim sayımız= "+sayac)
+
+
+'' Eğer  sensörden gelen değerler farklı ise  bu sinir ağı çalışacak ve herdefasında kendini daha dogrus sonuçlar amlamaız için 
+Else
+  
+  e_Q1=Q1
+  e_Q2=Q2
+  e_y1=1
+
+' Gizli  ve  çıkış katmanlarının nöronlarını hesaplanması 
+
+e_net3=(e_Q1*e_w13)+(e_Q2*e_w23)+e_b3
+e_Q3=1/(Math.Power(e,-e_net3)+1)
+
+
+e_net4=(e_Q1*e_w14)+(e_Q2*e_w24)+e_b4
+e_Q4=1/(Math.Power(e,-e_net4)+1)
+
+
+e_net5=(e_Q3*e_w35)+(e_Q4*e_w45)+e_b5
+e_Q5=1/(Math.Power(e,-e_net5)+1)
+
+toplamhata=y1-e_Q5
+
+
+TextWindow.WriteLine("Sonucumuz= "+e_Q5)
+
+If e_Q5>0.5 Then
+  e_Q5=1
+Else
+  e_Q5=0
+  EndIf
+  
+  
+a=e_Q5
+If a=1 Then 
+Motor.Start("AD",20)
+Else
+Motor.Stop("AD","Brake")
+EndIf
+
+TextWindow.ForegroundColor="green"
+TextWindow.WriteLine("x1="+x1+ "  x2="+x2  + "  y1="+e_y1)
+TextWindow.WriteLine("")
+TextWindow.WriteLine("Q1= "+e_Q1)
+TextWindow.WriteLine("Q2= "+e_Q2)
+TextWindow.WriteLine("")
+TextWindow.WriteLine("Eygitim sayımız= "+sayac)
+TextWindow.WriteLine("Sonucmuz  "+e_Q5)
+TextWindow.WriteLine("Toplam hata değerimiz= "+toplamhata)
+TextWindow.WriteLine("")
+TextWindow.WriteLine("Eğitim sayımız= "+sayac)
+
+  
+EndIf
+
+  z=z+1
+ 
+EndWhile
+
+
+
+
